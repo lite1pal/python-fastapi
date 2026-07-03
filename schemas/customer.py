@@ -1,9 +1,16 @@
-from pydantic import BaseModel
-from models.customer import Customer, CustomerStatus
+from pydantic import BaseModel, ConfigDict
+from models.customer import CustomerStatus
 
 
-class CustomerResponse(Customer):
-    pass
+class CustomerResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    company: str | None
+    status: CustomerStatus
+    notes: str | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CreateCustomerRequest(BaseModel):

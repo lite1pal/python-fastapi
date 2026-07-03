@@ -7,6 +7,7 @@ from schemas.customer import (
 )
 from models.customer import Customer
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from repositories import customers as customer_repo
 
@@ -18,14 +19,15 @@ storage_provider: StorageProvider = FakeR2StorageProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
-    return CustomerResponse(**customer.model_dump())
+    return CustomerResponse.model_validate(customer)
 
 
 def list(
+    db: Session,
     limit: int = 10,
     search: str | None = None,
 ) -> list[CustomerResponse]:
-    customers = customer_repo.list_customers()
+    customers = customer_repo.list_customers(db)
 
     if search is not None:
         search_lower = search.lower()
@@ -43,8 +45,8 @@ def list(
     return [to_response(customer) for customer in customers[:limit]]
 
 
-def get(id: int) -> CustomerResponse:
-    customer = customer_repo.get(id)
+def get(db: Session, id: int) -> CustomerResponse:
+    customer = customer_repo.get(db, id)
 
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -52,27 +54,27 @@ def get(id: int) -> CustomerResponse:
     return to_response(customer)
 
 
-def patch(id: int, payload: PatchCustomerRequest) -> CustomerResponse:
-    current_customer = customer_repo.get(id)
+def patch(db: Session, id: int, payload: PatchCustomerRequest) -> CustomerResponse:
+    current_customer = customer_repo.get(db, id)
 
     if current_customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
 
     updates = payload.model_dump(exclude_unset=True)
-    updated_customer = current_customer.model_copy(update=updates)
+    for field, value in updates.items():
+        setattr(current_customer, field, value)
 
-    saved_customer = customer_repo.update(id, updated_customer)
+    saved_customer = customer_repo.update(db, current_customer)
     return to_response(saved_customer)
 
 
-def create(payload: CreateCustomerRequest) -> CustomerResponse:
-    existing_customer = customer_repo.get_by_email(payload.email)
+def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
+    existing_customer = customer_repo.get_by_email(db, payload.email)
 
     if existing_customer is not None:
         raise HTTPException(status_code=400, detail="Email already exists")
 
     customer = Customer(
-        id=0,
         name=payload.name,
         email=payload.email,
         company=payload.company,
@@ -80,13 +82,13 @@ def create(payload: CreateCustomerRequest) -> CustomerResponse:
         notes=payload.notes,
     )
 
-    created_customer = customer_repo.create(customer)
+    created_customer = customer_repo.create(db, customer)
 
     return to_response(created_customer)
 
 
-def delete(customer_id: int) -> CustomerResponse:
-    archived_customer = customer_repo.archive_customer(customer_id)
+def delete(db: Session, customer_id: int) -> CustomerResponse:
+    archived_customer = customer_repo.archive_customer(db, customer_id)
 
     if archived_customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -94,8 +96,8 @@ def delete(customer_id: int) -> CustomerResponse:
     return to_response(archived_customer)
 
 
-def summarize_customer_notes(id: int) -> str:
-    customer = customer_repo.get_by_id(id)
+def summarize_customer_notes(db: Session, id: int) -> str:
+    customer = customer_repo.get_by_id(db, id)
 
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -107,9 +109,9 @@ def summarize_customer_notes(id: int) -> str:
 
 
 def create_customer_avatar_upload_url(
-    id: int, payload: CreateCustomerAvatarUploadRequest
+    db: Session, id: int, payload: CreateCustomerAvatarUploadRequest
 ) -> dict[str, str]:
-    customer = customer_repo.get_by_id(id)
+    customer = customer_repo.get_by_id(db, id)
 
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")

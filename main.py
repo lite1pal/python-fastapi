@@ -1,10 +1,27 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from db import Base, SessionLocal, engine
+from repositories.customers import seed_customers
 from routers.customers import router as customers_router
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        seed_customers(db)
+    finally:
+        db.close()
+    yield
 
 app = FastAPI(
     title="Customer API",
     description="A small FastAPI service for managing customers and a few related workflows.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 app.include_router(customers_router)
 
