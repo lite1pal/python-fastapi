@@ -7,11 +7,8 @@ import {
   listCustomers,
   patchCustomer,
   summarizeCustomerNotes,
-} from "@/api/customers";
-import type {
-  CreateCustomerRequest,
-  PatchCustomerRequest,
-} from "@/api/types";
+} from "@/features/customers/api/customersApi";
+import type { CreateCustomerRequest, PatchCustomerRequest } from "@/api/types";
 
 export function useCustomers(params?: { limit?: number; search?: string }) {
   return useQuery({
@@ -47,7 +44,9 @@ export function usePatchCustomer(customerId: number) {
       patchCustomer(customerId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["customers"] });
-      void queryClient.invalidateQueries({ queryKey: ["customers", customerId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["customers", customerId],
+      });
     },
   });
 }

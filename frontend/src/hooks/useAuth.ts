@@ -1,6 +1,5 @@
+import { getCurrentUser } from "@/features/auth/api/getCurrentUser";
 import { useQuery } from "@tanstack/react-query";
-
-import { getCurrentUser } from "@/api/auth";
 
 export function useAuthMe() {
   return useQuery({

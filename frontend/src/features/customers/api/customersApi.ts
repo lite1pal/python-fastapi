@@ -6,7 +6,7 @@ import type {
   CustomerResponse,
   PatchCustomerRequest,
   QueuedResponse,
-} from "./types";
+} from "@/api/types";
 
 export function listCustomers(params?: { limit?: number; search?: string }) {
   const searchParams = new URLSearchParams();
