@@ -13,9 +13,11 @@ from repositories import customers as customer_repo
 
 from providers.ai import AIProvider, FakeAIProvider
 from providers.storage import FakeR2StorageProvider, StorageProvider
+from providers.email import FakeEmailProvider, EmailProvider
 
 ai_provider: AIProvider = FakeAIProvider()
 storage_provider: StorageProvider = FakeR2StorageProvider()
+email_provider: EmailProvider = FakeEmailProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
@@ -83,6 +85,12 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
     )
 
     created_customer = customer_repo.create(db, customer)
+
+    email_provider.send_customer_created(
+        to_email=created_customer.email,
+        customer_name=created_customer.name,
+        company=created_customer.company,
+    )
 
     return to_response(created_customer)
 
