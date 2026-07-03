@@ -40,8 +40,7 @@ def create_customer(payload: CreateCustomerRequest, db: Session = Depends(get_db
 
 @router.post("/{customer_id}/summarize_notes")
 def summarize_customer_notes(customer_id: int, db: Session = Depends(get_db)):
-    summary = customers.summarize_customer_notes(db, customer_id)
-    return {"summary": summary}
+    return customers.summarize_customer_notes(db, customer_id)
 
 
 @router.post("/{customer_id}/upload_url", response_model=CustomerAvatarUploadResponse)
