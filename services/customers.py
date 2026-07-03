@@ -15,6 +15,7 @@ from schemas.customer import (
     PatchCustomerRequest,
     CreateCustomerAvatarUploadRequest,
     CustomerAvatarUploadResponse,
+    QueuedResponse,
 )
 from models.customer import Customer
 
@@ -25,6 +26,7 @@ from providers.storage import FakeR2StorageProvider, StorageProvider
 from providers.email import FakeEmailProvider, EmailProvider
 from providers.queue import FakeQueueProvider, QueueProvider
 from providers.analytics import FakeAnalyticsProvider, AnalyticsProvider
+from services.side_effects import log_side_effect_failure
 
 ai_provider: AIProvider = FakeAIProvider()
 storage_provider: StorageProvider = FakeR2StorageProvider()
@@ -36,10 +38,6 @@ logger = logging.getLogger(__name__)
 
 def to_response(customer: Customer) -> CustomerResponse:
     return CustomerResponse.model_validate(customer)
-
-
-def _log_side_effect_failure(action: str, exc: Exception, **context: object) -> None:
-    logger.warning("%s failed: %s | context=%s", action, exc, context)
 
 
 def list(
@@ -111,7 +109,8 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
             company=created_customer.company,
         )
     except Exception as exc:
-        _log_side_effect_failure(
+        log_side_effect_failure(
+            logger,
             "send_customer_created_email",
             exc,
             customer_id=created_customer.id,
@@ -125,7 +124,8 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
             status=created_customer.status,
         )
     except Exception as exc:
-        _log_side_effect_failure(
+        log_side_effect_failure(
+            logger,
             "track_customer_created",
             exc,
             customer_id=created_customer.id,
@@ -143,7 +143,8 @@ def delete(db: Session, customer_id: int) -> CustomerResponse:
     try:
         analytics_provider.track_customer_archived(customer_id=customer_id)
     except Exception as exc:
-        _log_side_effect_failure(
+        log_side_effect_failure(
+            logger,
             "track_customer_archived",
             exc,
             customer_id=customer_id,
@@ -152,7 +153,7 @@ def delete(db: Session, customer_id: int) -> CustomerResponse:
     return to_response(archived_customer)
 
 
-def summarize_customer_notes(db: Session, id: int) -> dict[str, str]:
+def summarize_customer_notes(db: Session, id: int) -> QueuedResponse:
     customer = customer_repo.get_by_id(db, id)
 
     if customer is None:
@@ -164,10 +165,11 @@ def summarize_customer_notes(db: Session, id: int) -> dict[str, str]:
     try:
         queue_provider.enqueue_customer_notes_summary(customer_id=customer.id)
     except Exception as exc:
-        logger.warning(
-            "enqueue_customer_notes_summary failed: %s | customer_id=%s",
+        log_side_effect_failure(
+            logger,
+            "enqueue_customer_notes_summary",
             exc,
-            customer.id,
+            customer_id=customer.id,
         )
         raise UpstreamUnavailableError(
             "Unable to queue notes summary right now",
@@ -178,13 +180,14 @@ def summarize_customer_notes(db: Session, id: int) -> dict[str, str]:
             customer_id=customer.id,
         )
     except Exception as exc:
-        _log_side_effect_failure(
+        log_side_effect_failure(
+            logger,
             "track_customer_notes_summary_requested",
             exc,
             customer_id=customer.id,
         )
 
-    return {"status": "queued"}
+    return QueuedResponse(status="queued")
 
 
 def create_customer_avatar_upload_url(
@@ -200,11 +203,12 @@ def create_customer_avatar_upload_url(
             filename=payload.filename, content_type=payload.content_type
         )
     except Exception as exc:
-        logger.warning(
-            "create_presigned_upload_url failed: %s | customer_id=%s filename=%s",
+        log_side_effect_failure(
+            logger,
+            "create_presigned_upload_url",
             exc,
-            customer.id,
-            payload.filename,
+            customer_id=customer.id,
+            filename=payload.filename,
         )
         raise UpstreamBadGatewayError(
             "Unable to create upload URL right now",
