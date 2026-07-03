@@ -66,6 +66,37 @@ class CustomerApiTests(unittest.TestCase):
             },
         )
 
+    def test_auth_me_returns_authenticated_user(self) -> None:
+        response = self.client.get(
+            "/auth/me",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "id": "user_admin",
+                "email": "admin@example.com",
+                "role": "admin",
+            },
+        )
+
+    def test_cors_allows_local_react_origin(self) -> None:
+        response = self.client.options(
+            "/customers",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.headers["access-control-allow-origin"],
+            "http://localhost:5173",
+        )
+
     def test_delete_archives_customer(self) -> None:
         response = self.client.delete("/customers/1")
 
