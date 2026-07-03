@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { CreateCustomerRequest, CustomerStatus } from "../api/types";
+import type { CreateCustomerRequest, CustomerStatus } from "../../../api/types";
 
 const customerStatuses = ["lead", "active", "archived"] as const satisfies readonly CustomerStatus[];
 

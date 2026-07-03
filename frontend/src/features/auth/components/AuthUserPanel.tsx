@@ -1,5 +1,5 @@
-import { useAuthMe } from "../hooks/useAuth";
-import { Message, Panel } from "./ui";
+import { useAuthMe } from "../../../hooks/useAuth";
+import { Message, Panel } from "../../../components/ui";
 
 export function AuthUserPanel() {
   const auth = useAuthMe();

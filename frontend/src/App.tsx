@@ -1,7 +1,7 @@
 import { Hero } from "./components/Hero";
-import { AuthUserPanel } from "./components/AuthUserPanel";
-import { CreateCustomerPanel } from "./components/CreateCustomerPanel";
-import { CustomerListPanel } from "./components/CustomerListPanel";
+import { AuthUserPanel } from "./features/auth/components/AuthUserPanel";
+import { CreateCustomerPanel } from "./features/customers/components/CreateCustomerPanel";
+import { CustomerListPanel } from "./features/customers/components/CustomerListPanel";
 
 export function App() {
   return (

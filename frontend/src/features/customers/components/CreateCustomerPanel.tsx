@@ -7,8 +7,8 @@ import {
   toCreateCustomerPayload,
   type CreateCustomerFormValues,
 } from "../forms/createCustomerForm";
-import { useCreateCustomer } from "../hooks/useCustomers";
-import { Button, Field, Input, Message, Panel, Select, Textarea } from "./ui";
+import { useCreateCustomer } from "../../../hooks/useCustomers";
+import { Button, Field, Input, Message, Panel, Select, Textarea } from "../../../components/ui";
 
 export function CreateCustomerPanel() {
   const createCustomer = useCreateCustomer();

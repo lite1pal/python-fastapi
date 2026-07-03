@@ -1,5 +1,5 @@
-import { useDeleteCustomer, useCustomers } from "../hooks/useCustomers";
-import { Button, Message, Panel } from "./ui";
+import { useDeleteCustomer, useCustomers } from "../../../hooks/useCustomers";
+import { Button, Message, Panel } from "../../../components/ui";
 
 export function CustomerListPanel() {
   const customers = useCustomers();
