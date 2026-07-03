@@ -15,11 +15,13 @@ from providers.ai import AIProvider, FakeAIProvider
 from providers.storage import FakeR2StorageProvider, StorageProvider
 from providers.email import FakeEmailProvider, EmailProvider
 from providers.queue import FakeQueueProvider, QueueProvider
+from providers.analytics import FakeAnalyticsProvider, AnalyticsProvider
 
 ai_provider: AIProvider = FakeAIProvider()
 storage_provider: StorageProvider = FakeR2StorageProvider()
 email_provider: EmailProvider = FakeEmailProvider()
 queue_provider: QueueProvider = FakeQueueProvider()
+analytics_provider: AnalyticsProvider = FakeAnalyticsProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
@@ -94,6 +96,12 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
         company=created_customer.company,
     )
 
+    analytics_provider.track_customer_created(
+        customer_id=created_customer.id,
+        email=created_customer.email,
+        status=created_customer.status,
+    )
+
     return to_response(created_customer)
 
 
@@ -102,6 +110,8 @@ def delete(db: Session, customer_id: int) -> CustomerResponse:
 
     if archived_customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
+
+    analytics_provider.track_customer_archived(customer_id=customer_id)
 
     return to_response(archived_customer)
 
@@ -116,6 +126,10 @@ def summarize_customer_notes(db: Session, id: int) -> str:
         raise HTTPException(status_code=400, detail="Customer has no notes")
 
     queue_provider.enqueue_customer_notes_summary(customer_id=customer.id)
+
+    analytics_provider.track_customer_notes_summary_requested(
+        customer_id=customer.id,
+    )
 
     return {"status": "queued"}
 
