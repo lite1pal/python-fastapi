@@ -26,6 +26,17 @@ The API creates the database schema on startup and seeds a few customers so the 
 .venv/bin/python -m unittest discover -s tests
 ```
 
+## Frontend scaffold
+
+A minimal React + TypeScript client is available in `frontend/`.
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
 ## Notes
 
 - Data is stored via SQLAlchemy using `DATABASE_URL`.
