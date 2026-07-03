@@ -1,34 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
+import {
+  createCustomerSchema,
+  initialCreateCustomerForm,
+  toCreateCustomerPayload,
+  type CreateCustomerFormValues,
+} from "../forms/createCustomerForm";
 import { useCreateCustomer } from "../hooks/useCustomers";
-import type { CustomerStatus } from "../api/types";
 import { Button, Field, Input, Message, Panel, Select, Textarea } from "./ui";
-
-const customerStatuses = ["lead", "active", "archived"] as const satisfies readonly CustomerStatus[];
-
-const createCustomerSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required.")
-    .email("Enter a valid email address."),
-  company: z.string(),
-  status: z.enum(customerStatuses),
-  notes: z.string(),
-});
-
-type CreateCustomerFormValues = z.infer<typeof createCustomerSchema>;
-
-const initialForm: CreateCustomerFormValues = {
-  name: "",
-  email: "",
-  company: "",
-  status: "lead",
-  notes: "",
-};
 
 export function CreateCustomerPanel() {
   const createCustomer = useCreateCustomer();
@@ -38,21 +18,14 @@ export function CreateCustomerPanel() {
     reset,
     formState: { errors },
   } = useForm<CreateCustomerFormValues>({
-    defaultValues: initialForm,
+    defaultValues: initialCreateCustomerForm,
     resolver: zodResolver(createCustomerSchema),
   });
 
   function onSubmit(values: CreateCustomerFormValues) {
-    createCustomer.mutate(
-      {
-        ...values,
-        company: values.company || null,
-        notes: values.notes || null,
-      },
-      {
-        onSuccess: () => reset(initialForm),
-      },
-    );
+    createCustomer.mutate(toCreateCustomerPayload(values), {
+      onSuccess: () => reset(initialCreateCustomerForm),
+    });
   }
 
   return (
