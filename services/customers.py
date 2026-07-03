@@ -4,13 +4,15 @@ from schemas.customer import (
     PatchCustomerRequest,
 )
 from models.customer import Customer
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
 from repositories import customers as customer_repo
 
 from providers.ai import AIProvider, FakeAIProvider
+from providers.storage import LocalStorageProvider, StorageProvider
 
 ai_provider: AIProvider = FakeAIProvider()
+storage_provider: StorageProvider = LocalStorageProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
@@ -100,3 +102,16 @@ def summarize_customer_notes(id: int) -> str:
         raise HTTPException(status_code=400, detail="Customer has no notes")
 
     return ai_provider.summarize(customer.notes)
+
+
+def upload_customer_avatar(id: int, file: UploadFile) -> dict[str, str]:
+    customer = customer_repo.get_by_id(id)
+
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    content = file.file.read()
+
+    url = storage_provider.upload_file(file.filename, content)
+
+    return {"url": url}

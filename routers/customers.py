@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File
 from schemas.customer import (
     CustomerResponse,
     CreateCustomerRequest,
@@ -33,6 +33,14 @@ def create_customer(payload: CreateCustomerRequest):
 def summarize_customer_notes(customer_id: int):
     summary = customers.summarize_customer_notes(customer_id)
     return {"summary": summary}
+
+
+@router.post("/{customer_id}/upload_avatar")
+def upload_customer_avatar(
+    customer_id: int,
+    file: UploadFile = File(...),
+):
+    return customers.upload_customer_avatar(customer_id, file)
 
 
 @router.delete("/{customer_id}", response_model=bool)
