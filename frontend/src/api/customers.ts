@@ -6,7 +6,7 @@ import type {
   PatchCustomerRequest,
   QueuedResponse,
 } from "./types";
-import { apiRequest } from "./http";
+import { apiRequest } from "@/api/http";
 
 export function listCustomers(params?: { limit?: number; search?: string }) {
   const searchParams = new URLSearchParams();

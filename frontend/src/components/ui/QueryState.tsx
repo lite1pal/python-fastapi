@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import { Message } from "./Message";
+import { Message } from "@/components/ui/Message";
 
 type QueryStateProps = PropsWithChildren<{
   empty?: ReactNode;

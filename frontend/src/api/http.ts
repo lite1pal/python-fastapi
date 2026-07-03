@@ -1,4 +1,4 @@
-import { apiConfig } from "./config";
+import { apiConfig } from "@/api/config";
 
 export class ApiError extends Error {
   status: number;

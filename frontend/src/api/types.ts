@@ -1,4 +1,4 @@
-import type { components } from "./generated";
+import type { components } from "@/api/generated";
 
 export type AuthUserResponse = components["schemas"]["AuthUserResponse"];
 export type CreateCustomerAvatarUploadRequest =

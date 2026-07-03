@@ -1,4 +1,4 @@
-import { Panel } from "./ui";
+import { Panel } from "@/components/ui";
 
 export function Hero() {
   return (

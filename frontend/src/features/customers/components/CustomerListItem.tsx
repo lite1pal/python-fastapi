@@ -1,5 +1,5 @@
-import type { CustomerResponse } from "../../../api/types";
-import { Button } from "../../../components/ui";
+import type { CustomerResponse } from "@/api/types";
+import { Button } from "@/components/ui";
 
 type CustomerListItemProps = {
   customer: CustomerResponse;

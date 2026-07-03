@@ -7,11 +7,11 @@ import {
   listCustomers,
   patchCustomer,
   summarizeCustomerNotes,
-} from "../api/customers";
+} from "@/api/customers";
 import type {
   CreateCustomerRequest,
   PatchCustomerRequest,
-} from "../api/types";
+} from "@/api/types";
 
 export function useCustomers(params?: { limit?: number; search?: string }) {
   return useQuery({

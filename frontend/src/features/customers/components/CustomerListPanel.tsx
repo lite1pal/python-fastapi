@@ -1,6 +1,6 @@
-import { useDeleteCustomer, useCustomers } from "../../../hooks/useCustomers";
-import { Message, Panel, QueryState } from "../../../components/ui";
-import { CustomerListItem } from "./CustomerListItem";
+import { Message, Panel, QueryState } from "@/components/ui";
+import { useDeleteCustomer, useCustomers } from "@/hooks/useCustomers";
+import { CustomerListItem } from "@/features/customers/components/CustomerListItem";
 
 export function CustomerListPanel() {
   const customers = useCustomers();

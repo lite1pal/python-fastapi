@@ -7,7 +7,7 @@ import type {
 } from "react";
 import { cloneElement, isValidElement } from "react";
 
-import { Message } from "./Message";
+import { Message } from "@/components/ui/Message";
 
 const baseControlClassName =
   "w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted) aria-[invalid=true]:border-[color:var(--color-text-error)]";

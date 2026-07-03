@@ -2,13 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import {
-  createCustomerSchema,
-  initialCreateCustomerForm,
-  toCreateCustomerPayload,
-  type CreateCustomerFormValues,
-} from "../forms/createCustomerForm";
-import { useCreateCustomer } from "../../../hooks/useCustomers";
-import {
   Button,
   FormField,
   Input,
@@ -16,7 +9,14 @@ import {
   Panel,
   Select,
   Textarea,
-} from "../../../components/ui";
+} from "@/components/ui";
+import { useCreateCustomer } from "@/hooks/useCustomers";
+import {
+  createCustomerSchema,
+  initialCreateCustomerForm,
+  toCreateCustomerPayload,
+  type CreateCustomerFormValues,
+} from "@/features/customers/forms/createCustomerForm";
 
 export function CreateCustomerPanel() {
   const createCustomer = useCreateCustomer();
