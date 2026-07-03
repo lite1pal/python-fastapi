@@ -38,3 +38,7 @@ class CustomerAvatarUploadResponse(BaseModel):
     upload_url: str
     file_url: str
     key: str
+
+
+class QueuedResponse(BaseModel):
+    status: str

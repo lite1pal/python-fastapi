@@ -1,22 +1,26 @@
 class AppError(Exception):
-    pass
+    status_code = 500
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
 
 
 class NotFoundError(AppError):
-    pass
+    status_code = 404
 
 
 class ConflictError(AppError):
-    pass
+    status_code = 400
 
 
 class ValidationError(AppError):
-    pass
+    status_code = 400
 
 
 class UpstreamUnavailableError(AppError):
-    pass
+    status_code = 503
 
 
 class UpstreamBadGatewayError(AppError):
-    pass
+    status_code = 502

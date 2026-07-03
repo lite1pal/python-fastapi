@@ -8,6 +8,7 @@ from schemas.customer import (
     PatchCustomerRequest,
     CreateCustomerAvatarUploadRequest,
     CustomerAvatarUploadResponse,
+    QueuedResponse,
 )
 from services import customers
 
@@ -38,7 +39,7 @@ def create_customer(payload: CreateCustomerRequest, db: Session = Depends(get_db
     return customers.create(db, payload)
 
 
-@router.post("/{customer_id}/summarize_notes")
+@router.post("/{customer_id}/summarize_notes", response_model=QueuedResponse)
 def summarize_customer_notes(customer_id: int, db: Session = Depends(get_db)):
     return customers.summarize_customer_notes(db, customer_id)
 
