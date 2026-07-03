@@ -11,10 +11,10 @@ from fastapi import HTTPException
 from repositories import customers as customer_repo
 
 from providers.ai import AIProvider, FakeAIProvider
-from providers.storage import LocalStorageProvider, StorageProvider
+from providers.storage import FakeR2StorageProvider, StorageProvider
 
 ai_provider: AIProvider = FakeAIProvider()
-storage_provider: StorageProvider = LocalStorageProvider()
+storage_provider: StorageProvider = FakeR2StorageProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
@@ -25,7 +25,7 @@ def list(
     limit: int = 10,
     search: str | None = None,
 ) -> list[CustomerResponse]:
-    customers = customer_repo.list()
+    customers = customer_repo.list_customers()
 
     if search is not None:
         search_lower = search.lower()

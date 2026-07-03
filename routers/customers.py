@@ -44,6 +44,6 @@ def create_customer_avatar_upload_url(
     return customers.create_customer_avatar_upload_url(customer_id, payload)
 
 
-@router.delete("/{customer_id}", response_model=bool)
+@router.delete("/{customer_id}", response_model=CustomerResponse)
 def delete_customer(customer_id: int):
     return customers.delete(customer_id)
