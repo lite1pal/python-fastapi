@@ -8,6 +8,10 @@ from fastapi import HTTPException
 
 from repositories import customers as customer_repo
 
+from providers.ai import AIProvider, FakeAIProvider
+
+ai_provider: AIProvider = FakeAIProvider()
+
 
 def to_response(customer: Customer) -> CustomerResponse:
     return CustomerResponse(**customer.model_dump())
@@ -84,3 +88,15 @@ def delete(customer_id: int) -> CustomerResponse:
         raise HTTPException(status_code=404, detail="Customer not found")
 
     return to_response(archived_customer)
+
+
+def summarize_customer_notes(id: int) -> str:
+    customer = customer_repo.get_by_id(id)
+
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    if customer.notes is None:
+        raise HTTPException(status_code=400, detail="Customer has no notes")
+
+    return ai_provider.summarize(customer.notes)

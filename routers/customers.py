@@ -29,6 +29,12 @@ def create_customer(payload: CreateCustomerRequest):
     return customers.create(payload)
 
 
+@router.post("/{customer_id}/summarize_notes")
+def summarize_customer_notes(customer_id: int):
+    summary = customers.summarize_customer_notes(customer_id)
+    return {"summary": summary}
+
+
 @router.delete("/{customer_id}", response_model=bool)
 def delete_customer(customer_id: int):
     return customers.delete(customer_id)
