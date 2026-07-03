@@ -1,93 +1,93 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { useCreateCustomer } from "../hooks/useCustomers";
 import type { CustomerStatus } from "../api/types";
 import { Button, Field, Input, Message, Panel, Select, Textarea } from "./ui";
 
-const initialForm = {
+type CreateCustomerFormValues = {
+  name: string;
+  email: string;
+  company: string;
+  status: CustomerStatus;
+  notes: string;
+};
+
+const initialForm: CreateCustomerFormValues = {
   name: "",
   email: "",
   company: "",
-  status: "lead" as CustomerStatus,
+  status: "lead",
   notes: "",
 };
 
 export function CreateCustomerPanel() {
-  const [form, setForm] = useState(initialForm);
   const createCustomer = useCreateCustomer();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateCustomerFormValues>({
+    defaultValues: initialForm,
+  });
+
+  function onSubmit(values: CreateCustomerFormValues) {
+    createCustomer.mutate(
+      {
+        ...values,
+        company: values.company || null,
+        notes: values.notes || null,
+      },
+      {
+        onSuccess: () => reset(initialForm),
+      },
+    );
+  }
 
   return (
     <Panel title="Create customer">
-      <form
-        className="grid gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          createCustomer.mutate(
-            {
-              ...form,
-              company: form.company || null,
-              notes: form.notes || null,
-            },
-            {
-              onSuccess: () => setForm(initialForm),
-            },
-          );
-        }}
-      >
+      <form className="grid gap-3" onSubmit={handleSubmit(onSubmit)}>
         <Field>
           <Input
-            placeholder="Name"
-            value={form.name}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, name: event.target.value }))
-            }
+            placeholder="Name *"
+            aria-invalid={errors.name ? "true" : "false"}
+            {...register("name", {
+              required: "Name is required.",
+              validate: (value) =>
+                value.trim().length > 0 || "Name is required.",
+            })}
           />
+          {errors.name ? <Message tone="error">{errors.name.message}</Message> : null}
         </Field>
         <Field>
           <Input
-            placeholder="Email"
+            placeholder="Email *"
             type="email"
-            value={form.email}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, email: event.target.value }))
-            }
+            aria-invalid={errors.email ? "true" : "false"}
+            {...register("email", {
+              required: "Email is required.",
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "Enter a valid email address.",
+              },
+            })}
           />
+          {errors.email ? (
+            <Message tone="error">{errors.email.message}</Message>
+          ) : null}
         </Field>
         <Field>
-          <Input
-            placeholder="Company"
-            value={form.company}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                company: event.target.value,
-              }))
-            }
-          />
+          <Input placeholder="Company" {...register("company")} />
         </Field>
         <Field>
-          <Select
-            value={form.status}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                status: event.target.value as CustomerStatus,
-              }))
-            }
-          >
+          <Select {...register("status")}>
             <option value="lead">lead</option>
             <option value="active">active</option>
             <option value="archived">archived</option>
           </Select>
         </Field>
         <Field>
-          <Textarea
-            placeholder="Notes"
-            value={form.notes}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, notes: event.target.value }))
-            }
-          />
+          <Textarea placeholder="Notes" {...register("notes")} />
         </Field>
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={createCustomer.isPending}>

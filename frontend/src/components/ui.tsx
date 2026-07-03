@@ -30,7 +30,7 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted)"
+      className="w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted) aria-[invalid=true]:border-[color:var(--color-text-error)]"
     />
   );
 }
@@ -39,7 +39,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className="w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted)"
+      className="w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted) aria-[invalid=true]:border-[color:var(--color-text-error)]"
     />
   );
 }
@@ -48,7 +48,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className="min-h-28 w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted)"
+      className="min-h-28 w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted) aria-[invalid=true]:border-[color:var(--color-text-error)]"
     />
   );
 }
