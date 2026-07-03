@@ -1,8 +1,10 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter
 from schemas.customer import (
     CustomerResponse,
     CreateCustomerRequest,
     PatchCustomerRequest,
+    CreateCustomerAvatarUploadRequest,
+    CustomerAvatarUploadResponse,
 )
 from services import customers
 
@@ -35,12 +37,11 @@ def summarize_customer_notes(customer_id: int):
     return {"summary": summary}
 
 
-@router.post("/{customer_id}/upload_avatar")
-def upload_customer_avatar(
-    customer_id: int,
-    file: UploadFile = File(...),
+@router.post("/{customer_id}/upload_url", response_model=CustomerAvatarUploadResponse)
+def create_customer_avatar_upload_url(
+    customer_id: int, payload: CreateCustomerAvatarUploadRequest
 ):
-    return customers.upload_customer_avatar(customer_id, file)
+    return customers.create_customer_avatar_upload_url(customer_id, payload)
 
 
 @router.delete("/{customer_id}", response_model=bool)

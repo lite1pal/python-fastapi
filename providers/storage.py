@@ -1,35 +1,34 @@
-import os
 from typing import Protocol
+from pydantic import BaseModel
+
+
+class PresignedUpload(BaseModel):
+    upload_url: str
+    file_url: str
+    key: str
 
 
 class StorageProvider(Protocol):
-    def upload_file(self, filename: str, content: bytes) -> str:
+    def create_presigned_upload_url(
+        self, filename: str, content_type: str
+    ) -> PresignedUpload:
         pass
 
     def delete_file(self, url: str) -> None:
         pass
 
 
-class LocalStorageProvider:
-    def upload_file(self, filename: str, content: bytes) -> str:
-        os.makedirs("uploads", exist_ok=True)
+class FakeR2StorageProvider:
+    def create_presigned_upload_url(
+        self, filename: str, content_type: str
+    ) -> PresignedUpload:
+        key = f"customers/{filename}"
 
-        path = f"uploads/{filename}"
-
-        with open(path, "wb") as file:
-            file.write(content)
-
-        return path
-
-    def delete_file(self, url: str) -> None:
-        if os.path.exists(url):
-            os.remove(url)
-
-
-class R2StorageProvider:
-    def upload_file(self, filename: str, content: bytes) -> str:
-        # upload here
-        return f"https://r2.cloudflare.com/{filename}"
+        return PresignedUpload(
+            upload_url=f"https://fake-r2-upload-url.com/{key}",
+            file_url=f"https://cdn.example.com/{key}",
+            key=key,
+        )
 
     def delete_file(self, url: str) -> None:
         # delete here

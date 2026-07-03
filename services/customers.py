@@ -2,9 +2,11 @@ from schemas.customer import (
     CreateCustomerRequest,
     CustomerResponse,
     PatchCustomerRequest,
+    CreateCustomerAvatarUploadRequest,
+    CustomerAvatarUploadResponse,
 )
 from models.customer import Customer
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException
 
 from repositories import customers as customer_repo
 
@@ -104,14 +106,16 @@ def summarize_customer_notes(id: int) -> str:
     return ai_provider.summarize(customer.notes)
 
 
-def upload_customer_avatar(id: int, file: UploadFile) -> dict[str, str]:
+def create_customer_avatar_upload_url(
+    id: int, payload: CreateCustomerAvatarUploadRequest
+) -> dict[str, str]:
     customer = customer_repo.get_by_id(id)
 
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    content = file.file.read()
+    presigned_upload = storage_provider.create_presigned_upload_url(
+        filename=payload.filename, content_type=payload.content_type
+    )
 
-    url = storage_provider.upload_file(file.filename, content)
-
-    return {"url": url}
+    return CustomerAvatarUploadResponse(**presigned_upload.model_dump())
