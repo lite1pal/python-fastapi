@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/http/apiClient";
 import type {
   CreateCustomerRequest,
   CreateCustomerAvatarUploadRequest,
@@ -6,7 +7,6 @@ import type {
   PatchCustomerRequest,
   QueuedResponse,
 } from "./types";
-import { apiRequest } from "@/api/http";
 
 export function listCustomers(params?: { limit?: number; search?: string }) {
   const searchParams = new URLSearchParams();
@@ -51,9 +51,12 @@ export function deleteCustomer(customerId: number) {
 }
 
 export function summarizeCustomerNotes(customerId: number) {
-  return apiRequest<QueuedResponse>(`/customers/${customerId}/summarize_notes`, {
-    method: "POST",
-  });
+  return apiRequest<QueuedResponse>(
+    `/customers/${customerId}/summarize_notes`,
+    {
+      method: "POST",
+    },
+  );
 }
 
 export function createCustomerUploadUrl(

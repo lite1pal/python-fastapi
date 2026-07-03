@@ -1,4 +1,4 @@
-import { apiConfig } from "@/api/config";
+import { apiConfig } from "@/lib/http/apiConfig";
 
 export class ApiError extends Error {
   status: number;
@@ -39,9 +39,9 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { detail?: string }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      detail?: string;
+    } | null;
 
     throw new ApiError(
       payload?.detail ?? `Request failed with status ${response.status}`,
