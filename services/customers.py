@@ -1,3 +1,14 @@
+import logging
+
+from sqlalchemy.orm import Session
+
+from errors import (
+    ConflictError,
+    NotFoundError,
+    UpstreamBadGatewayError,
+    UpstreamUnavailableError,
+    ValidationError,
+)
 from schemas.customer import (
     CreateCustomerRequest,
     CustomerResponse,
@@ -6,8 +17,6 @@ from schemas.customer import (
     CustomerAvatarUploadResponse,
 )
 from models.customer import Customer
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 from repositories import customers as customer_repo
 
@@ -22,10 +31,15 @@ storage_provider: StorageProvider = FakeR2StorageProvider()
 email_provider: EmailProvider = FakeEmailProvider()
 queue_provider: QueueProvider = FakeQueueProvider()
 analytics_provider: AnalyticsProvider = FakeAnalyticsProvider()
+logger = logging.getLogger(__name__)
 
 
 def to_response(customer: Customer) -> CustomerResponse:
     return CustomerResponse.model_validate(customer)
+
+
+def _log_side_effect_failure(action: str, exc: Exception, **context: object) -> None:
+    logger.warning("%s failed: %s | context=%s", action, exc, context)
 
 
 def list(
@@ -55,7 +69,7 @@ def get(db: Session, id: int) -> CustomerResponse:
     customer = customer_repo.get(db, id)
 
     if customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise NotFoundError("Customer not found")
 
     return to_response(customer)
 
@@ -64,7 +78,7 @@ def patch(db: Session, id: int, payload: PatchCustomerRequest) -> CustomerRespon
     current_customer = customer_repo.get(db, id)
 
     if current_customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise NotFoundError("Customer not found")
 
     updates = payload.model_dump(exclude_unset=True)
     for field, value in updates.items():
@@ -78,7 +92,7 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
     existing_customer = customer_repo.get_by_email(db, payload.email)
 
     if existing_customer is not None:
-        raise HTTPException(status_code=400, detail="Email already exists")
+        raise ConflictError("Email already exists")
 
     customer = Customer(
         name=payload.name,
@@ -90,17 +104,32 @@ def create(db: Session, payload: CreateCustomerRequest) -> CustomerResponse:
 
     created_customer = customer_repo.create(db, customer)
 
-    email_provider.send_customer_created(
-        to_email=created_customer.email,
-        customer_name=created_customer.name,
-        company=created_customer.company,
-    )
+    try:
+        email_provider.send_customer_created(
+            to_email=created_customer.email,
+            customer_name=created_customer.name,
+            company=created_customer.company,
+        )
+    except Exception as exc:
+        _log_side_effect_failure(
+            "send_customer_created_email",
+            exc,
+            customer_id=created_customer.id,
+            email=created_customer.email,
+        )
 
-    analytics_provider.track_customer_created(
-        customer_id=created_customer.id,
-        email=created_customer.email,
-        status=created_customer.status,
-    )
+    try:
+        analytics_provider.track_customer_created(
+            customer_id=created_customer.id,
+            email=created_customer.email,
+            status=created_customer.status,
+        )
+    except Exception as exc:
+        _log_side_effect_failure(
+            "track_customer_created",
+            exc,
+            customer_id=created_customer.id,
+        )
 
     return to_response(created_customer)
 
@@ -109,27 +138,51 @@ def delete(db: Session, customer_id: int) -> CustomerResponse:
     archived_customer = customer_repo.archive_customer(db, customer_id)
 
     if archived_customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise NotFoundError("Customer not found")
 
-    analytics_provider.track_customer_archived(customer_id=customer_id)
+    try:
+        analytics_provider.track_customer_archived(customer_id=customer_id)
+    except Exception as exc:
+        _log_side_effect_failure(
+            "track_customer_archived",
+            exc,
+            customer_id=customer_id,
+        )
 
     return to_response(archived_customer)
 
 
-def summarize_customer_notes(db: Session, id: int) -> str:
+def summarize_customer_notes(db: Session, id: int) -> dict[str, str]:
     customer = customer_repo.get_by_id(db, id)
 
     if customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise NotFoundError("Customer not found")
 
     if customer.notes is None:
-        raise HTTPException(status_code=400, detail="Customer has no notes")
+        raise ValidationError("Customer has no notes")
 
-    queue_provider.enqueue_customer_notes_summary(customer_id=customer.id)
+    try:
+        queue_provider.enqueue_customer_notes_summary(customer_id=customer.id)
+    except Exception as exc:
+        logger.warning(
+            "enqueue_customer_notes_summary failed: %s | customer_id=%s",
+            exc,
+            customer.id,
+        )
+        raise UpstreamUnavailableError(
+            "Unable to queue notes summary right now",
+        ) from exc
 
-    analytics_provider.track_customer_notes_summary_requested(
-        customer_id=customer.id,
-    )
+    try:
+        analytics_provider.track_customer_notes_summary_requested(
+            customer_id=customer.id,
+        )
+    except Exception as exc:
+        _log_side_effect_failure(
+            "track_customer_notes_summary_requested",
+            exc,
+            customer_id=customer.id,
+        )
 
     return {"status": "queued"}
 
@@ -140,10 +193,21 @@ def create_customer_avatar_upload_url(
     customer = customer_repo.get_by_id(db, id)
 
     if customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
+        raise NotFoundError("Customer not found")
 
-    presigned_upload = storage_provider.create_presigned_upload_url(
-        filename=payload.filename, content_type=payload.content_type
-    )
+    try:
+        presigned_upload = storage_provider.create_presigned_upload_url(
+            filename=payload.filename, content_type=payload.content_type
+        )
+    except Exception as exc:
+        logger.warning(
+            "create_presigned_upload_url failed: %s | customer_id=%s filename=%s",
+            exc,
+            customer.id,
+            payload.filename,
+        )
+        raise UpstreamBadGatewayError(
+            "Unable to create upload URL right now",
+        ) from exc
 
     return CustomerAvatarUploadResponse(**presigned_upload.model_dump())
