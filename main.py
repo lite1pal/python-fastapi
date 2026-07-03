@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from db import Base, SessionLocal, engine
 from repositories.customers import seed_customers
 from routers.customers import router as customers_router
+from routers.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -17,6 +18,7 @@ async def lifespan(_: FastAPI):
         db.close()
     yield
 
+
 app = FastAPI(
     title="Customer API",
     description="A small FastAPI service for managing customers and a few related workflows.",
@@ -24,6 +26,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(customers_router)
+app.include_router(auth_router)
 
 
 @app.get("/")
