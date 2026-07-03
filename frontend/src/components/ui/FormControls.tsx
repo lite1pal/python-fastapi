@@ -1,16 +1,67 @@
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
-  PropsWithChildren,
+  ReactElement,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
+import { cloneElement, isValidElement } from "react";
+
+import { Message } from "./Message";
 
 const baseControlClassName =
   "w-full rounded-xl border border-(--color-border-strong) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-primary) outline-none transition focus:border-(--color-text-muted) aria-[invalid=true]:border-[color:var(--color-text-error)]";
 
-export function Field({ children }: PropsWithChildren) {
-  return <div className="grid gap-2">{children}</div>;
+type FormControlElementProps = {
+  "aria-describedby"?: string;
+  "aria-invalid"?: "false" | "true";
+  id?: string;
+};
+
+type FormFieldProps = {
+  children: ReactElement<FormControlElementProps>;
+  error?: string;
+  id: string;
+  label: string;
+  required?: boolean;
+};
+
+export function FormField({
+  children,
+  error,
+  id,
+  label,
+  required = false,
+}: FormFieldProps) {
+  const errorId = `${id}-error`;
+
+  if (!isValidElement(children)) {
+    return null;
+  }
+
+  const control = cloneElement(children, {
+    "aria-describedby": error ? errorId : undefined,
+    "aria-invalid": error ? "true" : "false",
+    id,
+  });
+
+  return (
+    <div className="grid gap-2">
+      <label
+        className="text-sm font-medium text-(--color-text-primary)"
+        htmlFor={id}
+      >
+        {label}
+        {required ? <span className="text-[color:var(--color-text-error)]"> *</span> : null}
+      </label>
+      {control}
+      {error ? (
+        <Message tone="error">
+          <span id={errorId}>{error}</span>
+        </Message>
+      ) : null}
+    </div>
+  );
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {

@@ -8,7 +8,15 @@ import {
   type CreateCustomerFormValues,
 } from "../forms/createCustomerForm";
 import { useCreateCustomer } from "../../../hooks/useCustomers";
-import { Button, Field, Input, Message, Panel, Select, Textarea } from "../../../components/ui";
+import {
+  Button,
+  FormField,
+  Input,
+  Message,
+  Panel,
+  Select,
+  Textarea,
+} from "../../../components/ui";
 
 export function CreateCustomerPanel() {
   const createCustomer = useCreateCustomer();
@@ -31,38 +39,35 @@ export function CreateCustomerPanel() {
   return (
     <Panel title="Create customer">
       <form className="grid gap-3" onSubmit={handleSubmit(onSubmit)}>
-        <Field>
-          <Input
-            placeholder="Name *"
-            aria-invalid={errors.name ? "true" : "false"}
-            {...register("name")}
-          />
-          {errors.name ? <Message tone="error">{errors.name.message}</Message> : null}
-        </Field>
-        <Field>
-          <Input
-            placeholder="Email *"
-            type="email"
-            aria-invalid={errors.email ? "true" : "false"}
-            {...register("email")}
-          />
-          {errors.email ? (
-            <Message tone="error">{errors.email.message}</Message>
-          ) : null}
-        </Field>
-        <Field>
-          <Input placeholder="Company" {...register("company")} />
-        </Field>
-        <Field>
+        <FormField
+          error={errors.name?.message}
+          id="create-customer-name"
+          label="Name"
+          required
+        >
+          <Input placeholder="Jane Doe" {...register("name")} />
+        </FormField>
+        <FormField
+          error={errors.email?.message}
+          id="create-customer-email"
+          label="Email"
+          required
+        >
+          <Input placeholder="jane@example.com" type="email" {...register("email")} />
+        </FormField>
+        <FormField id="create-customer-company" label="Company">
+          <Input placeholder="Acme Inc." {...register("company")} />
+        </FormField>
+        <FormField id="create-customer-status" label="Status">
           <Select {...register("status")}>
             <option value="lead">lead</option>
             <option value="active">active</option>
             <option value="archived">archived</option>
           </Select>
-        </Field>
-        <Field>
-          <Textarea placeholder="Notes" {...register("notes")} />
-        </Field>
+        </FormField>
+        <FormField id="create-customer-notes" label="Notes">
+          <Textarea placeholder="Add context for the team" {...register("notes")} />
+        </FormField>
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={createCustomer.isPending}>
             {createCustomer.isPending ? "Saving..." : "Create customer"}
