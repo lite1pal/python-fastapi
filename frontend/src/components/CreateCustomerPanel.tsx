@@ -1,16 +1,26 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { useCreateCustomer } from "../hooks/useCustomers";
 import type { CustomerStatus } from "../api/types";
 import { Button, Field, Input, Message, Panel, Select, Textarea } from "./ui";
 
-type CreateCustomerFormValues = {
-  name: string;
-  email: string;
-  company: string;
-  status: CustomerStatus;
-  notes: string;
-};
+const customerStatuses = ["lead", "active", "archived"] as const satisfies readonly CustomerStatus[];
+
+const createCustomerSchema = z.object({
+  name: z.string().trim().min(1, "Name is required."),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required.")
+    .email("Enter a valid email address."),
+  company: z.string(),
+  status: z.enum(customerStatuses),
+  notes: z.string(),
+});
+
+type CreateCustomerFormValues = z.infer<typeof createCustomerSchema>;
 
 const initialForm: CreateCustomerFormValues = {
   name: "",
@@ -29,6 +39,7 @@ export function CreateCustomerPanel() {
     formState: { errors },
   } = useForm<CreateCustomerFormValues>({
     defaultValues: initialForm,
+    resolver: zodResolver(createCustomerSchema),
   });
 
   function onSubmit(values: CreateCustomerFormValues) {
@@ -51,11 +62,7 @@ export function CreateCustomerPanel() {
           <Input
             placeholder="Name *"
             aria-invalid={errors.name ? "true" : "false"}
-            {...register("name", {
-              required: "Name is required.",
-              validate: (value) =>
-                value.trim().length > 0 || "Name is required.",
-            })}
+            {...register("name")}
           />
           {errors.name ? <Message tone="error">{errors.name.message}</Message> : null}
         </Field>
@@ -64,13 +71,7 @@ export function CreateCustomerPanel() {
             placeholder="Email *"
             type="email"
             aria-invalid={errors.email ? "true" : "false"}
-            {...register("email", {
-              required: "Email is required.",
-              pattern: {
-                value: /\S+@\S+\.\S+/,
-                message: "Enter a valid email address.",
-              },
-            })}
+            {...register("email")}
           />
           {errors.email ? (
             <Message tone="error">{errors.email.message}</Message>
