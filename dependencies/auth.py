@@ -5,7 +5,13 @@ auth_provider: AuthProvider = FakeAuthProvider()
 
 
 def require_user(authorization: str | None = Header(default=None)) -> AuthUser:
-    token = authorization.removeprefix("Bearer ").strip() if authorization else None
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     user = auth_provider.get_current_user(token)
 
     if user is None:
