@@ -2,23 +2,37 @@ from schemas.customer import (
     CreateCustomerRequest,
     CustomerResponse,
     PatchCustomerRequest,
-    Customer,
 )
+from models.customer import Customer
 from fastapi import HTTPException
 
 from repositories import customers as customer_repo
-
-
-# customers: dict[int, Customer] = {}
-next_id = 1
 
 
 def to_response(customer: Customer) -> CustomerResponse:
     return CustomerResponse(**customer.model_dump())
 
 
-def list(limit: int = 10, search: str | None = None) -> list[CustomerResponse]:
-    return []
+def list(
+    limit: int = 10,
+    search: str | None = None,
+) -> list[CustomerResponse]:
+    customers = customer_repo.list()
+
+    if search is not None:
+        search_lower = search.lower()
+        customers = [
+            customer
+            for customer in customers
+            if search_lower in customer.name.lower()
+            or search_lower in customer.email.lower()
+            or (
+                customer.company is not None
+                and search_lower in customer.company.lower()
+            )
+        ]
+
+    return [to_response(customer) for customer in customers[:limit]]
 
 
 def get(id: int) -> CustomerResponse:
@@ -44,14 +58,13 @@ def patch(id: int, payload: PatchCustomerRequest) -> CustomerResponse:
 
 
 def create(payload: CreateCustomerRequest) -> CustomerResponse:
-    global next_id
+    existing_customer = customer_repo.get_by_email(payload.email)
 
-    for customer in customers.values():
-        if customer.email == payload.email:
-            raise HTTPException(status_code=400, detail="Email already exists")
+    if existing_customer is not None:
+        raise HTTPException(status_code=400, detail="Email already exists")
 
     customer = Customer(
-        id=next_id,
+        id=0,
         name=payload.name,
         email=payload.email,
         company=payload.company,
@@ -64,14 +77,10 @@ def create(payload: CreateCustomerRequest) -> CustomerResponse:
     return to_response(created_customer)
 
 
-def delete(id: int) -> CustomerResponse:
-    current_customer = customer_repo.get(id)
+def delete(customer_id: int) -> CustomerResponse:
+    archived_customer = customer_repo.archive_customer(customer_id)
 
-    if current_customer is None:
+    if archived_customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
-
-    archived_customer = current_customer.model_copy(update={"status": "archived"})
-
-    customers[id] = archived_customer
 
     return to_response(archived_customer)
