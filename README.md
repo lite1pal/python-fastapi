@@ -18,6 +18,14 @@ Then open:
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/redoc`
 
+The API starts with a few seeded customers so the list and detail endpoints are useful immediately.
+
+## Run tests
+
+```bash
+.venv/bin/python -m unittest discover -s tests
+```
+
 ## Notes
 
 - Data is currently stored in memory.

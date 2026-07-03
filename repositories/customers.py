@@ -1,15 +1,45 @@
 from models.customer import Customer
 
-# in-memory data
-_customers: dict[int, Customer] = {}
-_next_id = 1
+
+def _seed_customers() -> dict[int, Customer]:
+    return {
+        1: Customer(
+            id=1,
+            name="Maya Chen",
+            email="maya.chen@northstar.io",
+            company="Northstar Labs",
+            status="active",
+            notes="Interested in annual billing and wants onboarding support for a small ops team.",
+        ),
+        2: Customer(
+            id=2,
+            name="Jordan Alvarez",
+            email="jordan@canvaspeak.com",
+            company="Canvas Peak",
+            status="lead",
+            notes="Requested a product demo after seeing the API integration example.",
+        ),
+        3: Customer(
+            id=3,
+            name="Priya Raman",
+            email="priya@signalforge.dev",
+            company="SignalForge",
+            status="archived",
+            notes="Churned after a pilot due to timing, but worth re-engaging next quarter.",
+        ),
+    }
+
+
+# In-memory demo data keeps the API useful immediately after startup.
+_customers: dict[int, Customer] = _seed_customers()
+_next_id = max(_customers) + 1
 
 
 def list_customers() -> list[Customer]:
     return list(_customers.values())
 
 
-def get(id: int) -> Customer:
+def get(id: int) -> Customer | None:
     return _customers.get(id)
 
 
