@@ -1,0 +1,34 @@
+from fastapi import APIRouter
+from schemas.customer import (
+    CustomerResponse,
+    CreateCustomerRequest,
+    PatchCustomerRequest,
+)
+from services import customers
+
+router = APIRouter(prefix="/customers", tags=["customers"])
+
+
+@router.get("", response_model=list[CustomerResponse])
+def list_customers(limit: int = 10, search: str | None = None):
+    return customers.list(limit=limit, search=search)
+
+
+@router.get("/{customer_id}", response_model=CustomerResponse)
+def get_customer(customer_id: int):
+    return customers.get(customer_id)
+
+
+@router.patch("/{customer_id}", response_model=CustomerResponse)
+def patch_customer(customer_id: int, payload: PatchCustomerRequest):
+    return customers.patch(customer_id, payload)
+
+
+@router.post("", response_model=CustomerResponse)
+def create_customer(payload: CreateCustomerRequest):
+    return customers.create(payload)
+
+
+@router.delete("/{customer_id}", response_model=bool)
+def delete_customer(customer_id: int):
+    return customers.delete(customer_id)
