@@ -14,10 +14,12 @@ from repositories import customers as customer_repo
 from providers.ai import AIProvider, FakeAIProvider
 from providers.storage import FakeR2StorageProvider, StorageProvider
 from providers.email import FakeEmailProvider, EmailProvider
+from providers.queue import FakeQueueProvider, QueueProvider
 
 ai_provider: AIProvider = FakeAIProvider()
 storage_provider: StorageProvider = FakeR2StorageProvider()
 email_provider: EmailProvider = FakeEmailProvider()
+queue_provider: QueueProvider = FakeQueueProvider()
 
 
 def to_response(customer: Customer) -> CustomerResponse:
@@ -113,7 +115,9 @@ def summarize_customer_notes(db: Session, id: int) -> str:
     if customer.notes is None:
         raise HTTPException(status_code=400, detail="Customer has no notes")
 
-    return ai_provider.summarize(customer.notes)
+    queue_provider.enqueue_customer_notes_summary(customer_id=customer.id)
+
+    return {"status": "queued"}
 
 
 def create_customer_avatar_upload_url(
